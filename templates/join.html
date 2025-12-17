@@ -413,9 +413,7 @@
     const cfg = findIntroConfig(pseudoRaw);
     if (!cfg) return Promise.resolve(false);
 
-    const seenKey = "intro_seen_" + cfg.key;
-    if (localStorage.getItem(seenKey) === "1") return Promise.resolve(false);
-    localStorage.setItem(seenKey, "1");
+
 
     const overlay = document.getElementById("intro-overlay");
     const img = document.getElementById("intro-img");
