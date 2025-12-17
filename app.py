@@ -37,7 +37,7 @@ EMPLOYEES_ALL = [
   "Marc","Adélie","Annie","Maéva","Laure","Coline","Matthieu","Roberto","Romain","Serigne",
   "Manon","Mélanie","Said","Magid","Anais","Mathilde","Chang Mo","Nathalie","Camille","Fatima",
   "Nadège","Cathy","Julie","Guiseppe","Loric","Johanna","Férisa","Quentin","Edith","Thierry",
-  "Corinne","Ophélie","Marie-Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
+  "Corinne","Ophélie","Marie Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
   "Elsa","constance","Valérie","sophie","Claire","Caroline","Eddie","Khalil",
 
   # Ajouts
