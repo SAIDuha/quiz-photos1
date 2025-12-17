@@ -317,10 +317,8 @@ def get_local_ip() -> str:
     return ip
 
 def get_join_url() -> str:
-    public = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
-    if public:
-        return f"{public}/join"
-    return f"http://{get_local_ip()}:{int(os.environ.get('PORT', 8000))}/join"
+    return "https://quiz-photos1.onrender.com/join"
+
 
 def current_question():
     return QUIZ[current_question_index]
