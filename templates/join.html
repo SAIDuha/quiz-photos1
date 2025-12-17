@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Quiz photos – Participation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{
+      --bg:#020617; --panel:#0b1120; --border:#1f2937;
+      --text:#e5e7eb; --muted:#9ca3af;
+      --good:#22c55e; --good2:#bbf7d0;
+      --gold:#fbbf24; --silver:#94a3b8; --bronze:#f97316;
+    }
+    body{
+      margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);color:var(--text);
+      padding:18px;
+    }
+    .card{
+      background:var(--bg);border-radius:18px;border:1px solid var(--border);
+      padding:20px 18px;max-width:520px;width:100%;
+      box-shadow:0 20px 45px rgba(0,0,0,.6);
+      position:relative; overflow:hidden;
+    }
+    h1{margin:0 0 6px;font-size:1.45rem;}
+    .subtitle{margin-bottom:16px;color:var(--muted);font-size:.92rem;line-height:1.4;}
+    label{display:block;font-size:.9rem;margin-bottom:6px;color:#cbd5e1;}
+    input[type="text"],select{
+      width:100%;padding:11px 12px;border-radius:14px;border:1px solid #4b5563;outline:none;
+      background:var(--bg);color:var(--text);margin-bottom:12px;font-size:1rem;
+    }
+    .btn{
+      border:none;border-radius:14px;padding:11px 14px;font-size:1rem;cursor:pointer;
+      display:inline-flex;align-items:center;gap:10px;justify-content:center;width:100%;
+      font-weight:1000;
+    }
+    .btn-primary{background:var(--good);color:#022c22;}
+    .btn-secondary{background:var(--panel);border:1px solid var(--border);color:var(--text);}
+    .hidden{display:none;}
+
+    .question-meta{
+      font-size:.88rem;color:var(--muted);margin-bottom:10px;display:flex;
+      justify-content:space-between;gap:10px;align-items:center;
+    }
+    .status{font-size:.9rem;color:var(--muted);min-height:1.3em;margin-top:10px;line-height:1.35;}
+    .pill{
+      border:1px solid var(--border);background:var(--panel);padding:6px 10px;border-radius:999px;
+      font-size:.82rem;color:var(--muted);
+    }
+
+    /* Photo wrapper = bandeau + zone image */
+    .photo-wrapper{
+      border-radius:14px;
+      overflow:hidden;
+      background:var(--panel);
+      border:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      margin-bottom:12px;
+    }
+    .top-banner{
+      display:none;
+      padding:12px 14px;
+      border-bottom:1px solid var(--border);
+      background:rgba(2,6,23,.78);
+      backdrop-filter: blur(6px);
+    }
+    .top-banner.show{display:block;}
+    .top-banner .answer{
+      font-size:1.35rem;
+      font-weight:1000;
+      line-height:1.15;
+      color:var(--text);
+    }
+    .top-banner .proverb{
+      margin-top:8px;
+      font-size:1.02rem;
+      color:var(--good2);
+      line-height:1.25;
+    }
+    .photo-media{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:12px;
+      min-height:220px;
+    }
+    .photo-media img{
+      max-width:100%;
+      max-height:300px;
+      object-fit:contain;
+      display:block;
+    }
+
+    /* Règlement lobby */
+    .rules{
+      border:1px solid var(--border);
+      background:var(--panel);
+      border-radius:14px;
+      padding:14px 14px;
+      margin-top:12px;
+    }
+    .rules h2{
+      margin:0 0 10px;
+      font-size:1.05rem;
+      font-weight:1000;
+    }
+    .rules ol{
+      margin:0; padding-left:18px;
+      color:var(--text);
+      line-height:1.45;
+      font-size:.95rem;
+    }
+    .rules li{margin:6px 0;}
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.35;
+    }
+
+    /* Podium final */
+    .final-wrap{
+      padding:8px 2px 2px;
+      text-align:center;
+    }
+    .final-title{
+      font-size:1.4rem;
+      font-weight:1100;
+      margin:8px 0 4px;
+    }
+    .final-sub{
+      color:var(--muted);
+      margin:0 0 14px;
+      font-size:.92rem;
+    }
+
+    .podium{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      align-items:end;
+      margin-top:14px;
+    }
+    .pod{
+      border:1px solid var(--border);
+      background:var(--panel);
+      border-radius:16px;
+      padding:12px 10px;
+      position:relative;
+      overflow:hidden;
+      transform: translateY(10px) scale(.98);
+      opacity:0;
+      animation: rise .6s ease forwards;
+    }
+    .pod:nth-child(1){animation-delay:.15s;}
+    .pod:nth-child(2){animation-delay:.00s;}
+    .pod:nth-child(3){animation-delay:.28s;}
+
+    @keyframes rise{
+      to{transform: translateY(0) scale(1); opacity:1;}
+    }
+
+    .pod .rank{
+      font-size:.9rem;
+      color:var(--muted);
+      font-weight:900;
+    }
+    .pod .name{
+      font-size:1.05rem;
+      font-weight:1100;
+      margin-top:6px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .pod .score{
+      margin-top:8px;
+      font-size:1.05rem;
+      font-weight:1100;
+    }
+    .pod.gold{border-color:rgba(251,191,36,.45);}
+    .pod.gold .score{color:var(--gold);}
+    .pod.silver .score{color:var(--silver);}
+    .pod.bronze .score{color:var(--bronze);}
+
+    /* Confettis CSS (léger, sans libs) */
+    .confetti{
+      position:absolute; inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .confetti i{
+      position:absolute;
+      top:-10%;
+      width:10px;height:14px;
+      border-radius:3px;
+      opacity:.95;
+      animation: fall 1.8s linear infinite;
+    }
+    @keyframes fall{
+      0%{transform:translateY(-20vh) rotate(0deg);}
+      100%{transform:translateY(120vh) rotate(420deg);}
+    }
+
+    /* Overlay points */
+    .award{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(2,6,23,.78);
+      opacity:0; pointer-events:none;
+      transition:opacity .12s ease;
+      z-index:5;
+    }
+    .award.show{opacity:1;}
+    .award .box{
+      border:1px solid var(--border); background:var(--panel);
+      border-radius:18px; padding:18px 16px;
+      min-width:240px; text-align:center;
+      box-shadow:0 25px 60px rgba(0,0,0,.6);
+      transform: translateY(10px) scale(.98);
+      animation: pop .55s ease forwards;
+    }
+    @keyframes pop{
+      0%{transform: translateY(10px) scale(.98); opacity:.0;}
+      55%{transform: translateY(-2px) scale(1.02); opacity:1;}
+      100%{transform: translateY(0px) scale(1.0); opacity:1;}
+    }
+    .award .pts{font-size:2rem; font-weight:1100; color:var(--good); margin-bottom:6px;}
+    .award .meta{color:var(--muted);font-size:.95rem;}
+    .award .total{margin-top:10px;color:var(--text);font-weight:900;}
+  </style>
+</head>
+
+<body>
+<div class="card">
+
+  <div class="award" id="award-overlay">
+    <div class="box">
+      <div class="pts" id="award-pts">+0</div>
+      <div class="meta" id="award-meta">—</div>
+      <div class="total" id="award-total">Total: 0</div>
+    </div>
+  </div>
+
+  <div id="login-panel">
+    <h1>Rejoindre le quiz</h1>
+    <div class="subtitle">Choisissez un pseudo, puis validez pour participer.</div>
+
+    <label for="pseudo">Pseudo</label>
+    <input type="text" id="pseudo" placeholder="Ex. Hamid">
+
+    <button class="btn btn-primary" id="join-btn">Rejoindre</button>
+    <div class="status" id="login-status"></div>
+  </div>
+
+  <div id="quiz-panel" class="hidden">
+    <div class="question-meta">
+      <span id="q-meta">—</span>
+      <span class="pill" id="answers-meta">✅ 0/0</span>
+    </div>
+
+    <div class="photo-wrapper">
+      <div class="top-banner" id="top-banner">
+        <div class="answer" id="top-answer">—</div>
+        <div class="proverb" id="top-proverb"></div>
+      </div>
+      <div class="photo-media" id="photo-media">
+        <span>Salle d’attente…</span>
+      </div>
+    </div>
+
+    <div id="rules-panel" class="rules hidden">
+      <h2>📌 Règlement (comment jouer)</h2>
+      <ol>
+        <li>Vous avez <b>20 secondes</b> par photo pour répondre.</li>
+        <li>Cliquez sur la <b>liste déroulante</b>, choisissez un prénom, puis cliquez sur <b>Valider</b>.</li>
+        <li>Plus vous répondez vite, plus vous gagnez de <b>points</b>.</li>
+        <li>Après les 20 secondes, il y a la <b>révélation</b> de la personne.</li>
+      </ol>
+      <div class="hint">Astuce : gardez un œil sur le chrono en haut (Q… / …).</div>
+    </div>
+
+    <div id="answer-panel">
+      <label for="employee-select">Votre réponse</label>
+      <select id="employee-select" disabled>
+        <option value="">Chargement…</option>
+      </select>
+
+      <button class="btn btn-secondary" id="submit-btn" disabled>Valider</button>
+      <div class="status" id="quiz-status"></div>
+    </div>
+
+    <div id="final-panel" class="hidden">
+      <div class="confetti" id="confetti"></div>
+      <div class="final-wrap">
+        <div class="final-title">🏆 Podium final</div>
+        <div class="final-sub">Bravo aux 3 gagnants !</div>
+
+        <div class="podium" id="podium-grid"></div>
+
+        <div class="status" style="margin-top:14px;">
+          Merci d’avoir joué 🎉
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pseudo = null;
+  let lastQuestionId = null;
+  let answerSentForCurrent = false;
+  let employees = [];
+  let finishedShown = false;
+
+  const saved = localStorage.getItem("quiz_pseudo");
+  if (saved) document.getElementById("pseudo").value = saved;
+
+  function fillEmployees(list){
+    employees = list || [];
+    const sel = document.getElementById("employee-select");
+    sel.innerHTML = `<option value="">— Choisir —</option>`;
+    employees.forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      sel.appendChild(opt);
+    });
+  }
+
+  function showAward({points, total, streak, correct, timeMs}){
+    const overlay = document.getElementById("award-overlay");
+    const ptsEl = document.getElementById("award-pts");
+    const metaEl = document.getElementById("award-meta");
+    const totalEl = document.getElementById("award-total");
+
+    if (correct){
+      ptsEl.textContent = `+${points} pts`;
+      ptsEl.style.color = "var(--good)";
+      metaEl.innerHTML = `⏱ ${Math.round(timeMs/10)/100}s • 🔥 streak ${streak}`;
+    } else {
+      ptsEl.textContent = `0 pt`;
+      ptsEl.style.color = "#fb7185";
+      metaEl.innerHTML = `❌ Mauvaise réponse • streak réinitialisée`;
+    }
+
+    totalEl.textContent = `Total: ${total} pts`;
+    overlay.classList.add("show");
+    setTimeout(() => overlay.classList.remove("show"), 900);
+  }
+
+  function showRules(show){
+    const panel = document.getElementById("rules-panel");
+    panel.classList.toggle("hidden", !show);
+  }
+
+  function showFinal(podium){
+    if (finishedShown) return;
+    finishedShown = true;
+
+    document.getElementById("answer-panel").classList.add("hidden");
+    document.getElementById("final-panel").classList.remove("hidden");
+
+    // Confettis
+    const conf = document.getElementById("confetti");
+    conf.innerHTML = "";
+    const colors = ["#22c55e","#60a5fa","#fbbf24","#fb7185","#a78bfa","#34d399"];
+    for (let i=0;i<26;i++){
+      const el = document.createElement("i");
+      el.style.left = Math.random()*100 + "%";
+      el.style.animationDelay = (Math.random()*1.2) + "s";
+      el.style.animationDuration = (1.2 + Math.random()*1.2) + "s";
+      el.style.background = colors[i % colors.length];
+      el.style.transform = `rotate(${Math.random()*360}deg)`;
+      conf.appendChild(el);
+    }
+
+    // Podium grid
+    const grid = document.getElementById("podium-grid");
+    grid.innerHTML = "";
+    const top3 = (podium || []).slice(0,3);
+
+    const classes = ["silver","gold","bronze"]; // ordre visuel: 2,1,3
+    const order = [1,0,2]; // index top3 à afficher dans la grille
+    order.forEach((idx, pos) => {
+      const p = top3[idx];
+      const box = document.createElement("div");
+      box.className = `pod ${classes[pos]}`;
+      if (!p){
+        box.innerHTML = `<div class="rank">—</div><div class="name">—</div><div class="score">0</div>`;
+      } else {
+        const rankLabel = (p.rank === 1) ? "🥇 1er" : (p.rank === 2) ? "🥈 2e" : "🥉 3e";
+        box.innerHTML = `
+          <div class="rank">${rankLabel}</div>
+          <div class="name">${p.pseudo}</div>
+          <div class="score">${p.score} pts</div>
+        `;
+      }
+      grid.appendChild(box);
+    });
+  }
+
+  async function registerPlayer(){
+    const name = document.getElementById("pseudo").value.trim();
+    if (!name){
+      document.getElementById("login-status").textContent = "Merci de saisir un pseudo.";
+      return;
+    }
+
+    const res = await fetch("/api/register_player", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({pseudo:name})
+    });
+
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok){
+      document.getElementById("login-status").textContent = data.error || "Erreur lors de l’enregistrement.";
+      return;
+    }
+
+    pseudo = name;
+    localStorage.setItem("quiz_pseudo", pseudo);
+
+    document.getElementById("login-panel").classList.add("hidden");
+    document.getElementById("quiz-panel").classList.remove("hidden");
+    document.getElementById("quiz-status").textContent = "Salle d’attente : l’animateur va lancer la partie.";
+    pollQuestion();
+  }
+
+  async function pollQuestion(){
+    if (!pseudo) return;
+
+    const res = await fetch("/api/current_question");
+    if (!res.ok){
+      setTimeout(pollQuestion, 1000);
+      return;
+    }
+
+    const data = await res.json();
+    document.getElementById("answers-meta").textContent = `✅ ${data.answers_received}/${data.players_count}`;
+
+    if (data.employees && (!employees.length || employees.length !== data.employees.length)){
+      fillEmployees(data.employees);
+    }
+
+    // Aucun quiz
+    if (data.total_questions === 0){
+      document.getElementById("q-meta").textContent = "Aucune question disponible";
+      document.getElementById("photo-media").innerHTML = "<span>Ajoute des paires enfant/adulte dans static/photos</span>";
+      document.getElementById("top-banner").classList.remove("show");
+      showRules(false);
+      disableAnswerUI("Aucune paire photo détectée.");
+      setTimeout(pollQuestion, 1200);
+      return;
+    }
+
+    // Lobby => afficher règles
+    if (data.phase === "lobby"){
+      document.getElementById("q-meta").textContent = "LOBBY — en attente du lancement…";
+      document.getElementById("photo-media").innerHTML = "<span>Salle d’attente…</span>";
+      document.getElementById("top-banner").classList.remove("show");
+      showRules(true);
+
+      document.getElementById("answer-panel").classList.remove("hidden");
+      document.getElementById("final-panel").classList.add("hidden");
+      finishedShown = false;
+
+      disableAnswerUI("L’animateur n’a pas encore lancé la partie.");
+      lastQuestionId = null;
+      answerSentForCurrent = false;
+      setTimeout(pollQuestion, 900);
+      return;
+    }
+
+    // Game running => cacher règles
+    showRules(false);
+
+    document.getElementById("q-meta").textContent =
+      `Q${data.question_number}/${data.total_questions} — ${data.phase.toUpperCase()} (${data.phase_remaining}s)`;
+
+    if (lastQuestionId !== data.id){
+      lastQuestionId = data.id;
+      answerSentForCurrent = false;
+      document.getElementById("employee-select").value = "";
+    }
+
+    renderState(data);
+    setTimeout(pollQuestion, 650);
+  }
+
+  function disableAnswerUI(msg){
+    document.getElementById("employee-select").disabled = true;
+    document.getElementById("submit-btn").disabled = true;
+    document.getElementById("quiz-status").textContent = msg || "";
+  }
+
+  function renderState(data){
+    const status = document.getElementById("quiz-status");
+    const sel = document.getElementById("employee-select");
+    const btn = document.getElementById("submit-btn");
+
+    const banner = document.getElementById("top-banner");
+    const topAnswer = document.getElementById("top-answer");
+    const topProverb = document.getElementById("top-proverb");
+    const media = document.getElementById("photo-media");
+
+    const isReveal = (data.phase === "reveal" || data.phase === "podium" || data.phase === "finished");
+
+    // Image + bandeau
+    if (isReveal && data.reveal_image_url){
+      media.innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
+
+      const answerLine = data.correct_label ? `✅ Réponse : ${data.correct_label}` : "";
+      const proverbLine = (data.proverb || "").trim();
+
+      if (answerLine || proverbLine){
+        banner.classList.add("show");
+        topAnswer.textContent = answerLine;
+        topProverb.textContent = proverbLine;
+      } else {
+        banner.classList.remove("show");
+        topAnswer.textContent = "";
+        topProverb.textContent = "";
+      }
+    } else {
+      media.innerHTML = `<img src="${data.image_url}" alt="Photo ancienne">`;
+      banner.classList.remove("show");
+      topAnswer.textContent = "";
+      topProverb.textContent = "";
+    }
+
+    if (data.game_paused){
+      disableAnswerUI("⏸ Pause : attendez la reprise.");
+      return;
+    }
+
+    if (data.phase === "question"){
+      sel.disabled = answerSentForCurrent;
+      btn.disabled = answerSentForCurrent;
+      status.textContent = answerSentForCurrent
+        ? "Réponse envoyée ✅ – attendez la révélation."
+        : "Sélectionnez un prénom puis validez.";
+      return;
+    }
+
+    sel.disabled = true;
+    btn.disabled = true;
+
+    if (data.phase === "reveal"){
+      status.textContent = "Révélation…";
+      return;
+    }
+
+    if (data.phase === "podium"){
+      status.textContent = "Classement intermédiaire…";
+      return;
+    }
+
+    if (data.phase === "finished"){
+      status.textContent = "Quiz terminé.";
+      // ✅ Ecran podium final uniquement
+      showFinal(data.podium || []);
+      return;
+    }
+
+    status.textContent = "Attente…";
+  }
+
+  async function submitAnswer(){
+    if (answerSentForCurrent) return;
+
+    const choiceLabel = (document.getElementById("employee-select").value || "").trim();
+    if (!choiceLabel){
+      document.getElementById("quiz-status").textContent = "Choisissez un prénom.";
+      return;
+    }
+
+    const res = await fetch("/api/submit_answer", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({pseudo, choice_label: choiceLabel})
+    });
+
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok){
+      document.getElementById("quiz-status").textContent = data.error || "Erreur d’envoi.";
+      return;
+    }
+
+    if (data.status === "already_answered"){
+      document.getElementById("quiz-status").textContent = "Réponse déjà envoyée pour cette question.";
+      return;
+    }
+
+    answerSentForCurrent = true;
+    document.getElementById("employee-select").disabled = true;
+    document.getElementById("submit-btn").disabled = true;
+
+    showAward({
+      points: data.points_awarded || 0,
+      total: data.total_score || 0,
+      streak: data.streak || 0,
+      correct: !!data.correct,
+      timeMs: data.answer_time_ms || 0
+    });
+
+    document.getElementById("quiz-status").textContent = "Réponse envoyée ✅ – attendez la suite.";
+  }
+
+  document.getElementById("join-btn").addEventListener("click", registerPlayer);
+  document.getElementById("submit-btn").addEventListener("click", submitAnswer);
+</script>
+
+</body>
+</html>

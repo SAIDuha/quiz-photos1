@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Quiz photos – Écran animateur</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#020617;color:#e5e7eb;}
+    .layout{max-width:1100px;width:100%;padding:24px;}
+    h1{margin:0 0 4px;font-size:1.8rem;}
+    .subtitle{margin-bottom:18px;color:#9ca3af;font-size:.9rem;}
+    .top-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0 20px;flex-wrap:wrap;}
+    .link-block{font-size:.9rem;color:#9ca3af;}
+    .link-block div:nth-child(2){font-size:.95rem;font-weight:500;color:#e5e7eb;word-break:break-all;}
+    .qr-block img{width:130px;height:130px;border-radius:12px;border:1px solid #1f2937;display:block;}
+    .qr-caption{font-size:.8rem;color:#9ca3af;margin-top:4px;text-align:center;}
+
+    .content{display:grid;grid-template-columns:2fr 1.2fr;gap:24px;align-items:flex-start;}
+    .card{background:#020617;border-radius:18px;border:1px solid #1f2937;padding:18px 20px;box-shadow:0 20px 45px rgba(0,0,0,.6);}
+    .question-meta{display:flex;justify-content:space-between;font-size:.85rem;color:#9ca3af;margin-bottom:10px;}
+    .photo-wrapper{border-radius:18px;overflow:hidden;background:#0b1120;border:1px solid #1f2937;min-height:320px;display:flex;align-items:center;justify-content:center;}
+    .photo-wrapper img{max-width:100%;max-height:460px;object-fit:contain;display:block;}
+
+    .btn{border:1px solid #1f2937;background:#0b1120;color:#e5e7eb;padding:10px 14px;border-radius:999px;cursor:pointer;display:inline-flex;gap:8px;align-items:center;}
+    .btn-primary{background:#22c55e;border-color:#16a34a;color:#022c22;font-weight:900;}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid #1f2937;background:#0b1120;padding:8px 12px;border-radius:999px;color:#9ca3af;font-size:.85rem;}
+    .muted{color:#9ca3af;font-size:.9rem;}
+
+    .reveal-card{display:flex;flex-direction:column;gap:12px;}
+    .scores-title{font-weight:600;margin-bottom:8px;font-size:1rem;}
+    .submeta{font-size:.85rem;color:#9ca3af;margin-bottom:8px;}
+    .proverb{font-size:1.05rem;color:#bbf7d0;border:1px solid #1f2937;background:#0b1120;padding:12px 14px;border-radius:14px;min-height:52px;}
+    .scores-list{list-style:none;padding:0;margin:0;font-size:.9rem;}
+    .scores-list li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #111827;}
+
+    /* Heatmap (histogram) */
+    .heatmap-wrap{margin-top:10px;}
+    .bars{display:flex;gap:6px;align-items:flex-end;height:90px;padding:10px;border-radius:14px;border:1px solid #1f2937;background:#0b1120;}
+    .bar{flex:1;min-width:6px;border-radius:10px;background:#1f2937;position:relative;overflow:hidden;}
+    .bar .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:#22c55e;}
+    .bar .cap{position:absolute;left:0;right:0;bottom:0;height:0;background:#60a5fa;opacity:.85;}
+    .heat-legend{display:flex;justify-content:space-between;color:#9ca3af;font-size:.8rem;margin-top:6px;}
+    .badge{display:inline-flex;gap:8px;align-items:center;color:#9ca3af;font-size:.85rem;margin-top:8px;}
+    .dot{width:10px;height:10px;border-radius:999px;background:#22c55e;display:inline-block;}
+    .dot2{width:10px;height:10px;border-radius:999px;background:#60a5fa;display:inline-block;}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <h1>Quiz photos – Écran animateur</h1>
+
+  <div class="top-row">
+    <div class="link-block">
+      <div>Lien de connexion :</div>
+      <div>{{ join_url }}</div>
+      <div class="muted" style="margin-top:6px;">
+        Inscriptions après lancement : <b>{{ "AUTORISÉES" if allow_late_join else "FERMÉES" }}</b>
+      </div>
+    </div>
+    <div class="qr-block">
+      <img src="{{ url_for('qr') }}" alt="QR code de connexion">
+      <div class="qr-caption">Scannez pour rejoindre</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin:14px 0;">
+    <div class="scores-title">Contrôles animateur</div>
+    <div class="submeta" id="lobby-info">Lobby…</div>
+
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button id="btn-start" class="btn btn-primary">▶ Lancer</button>
+      <button id="btn-pause" class="btn">⏸ Pause</button>
+      <button id="btn-resume" class="btn">⏵ Reprendre</button>
+      <button id="btn-next" class="btn">⏭ Passer</button>
+      <button id="btn-reset" class="btn">⟲ Reset</button>
+
+      <span class="pill" id="players-pill">👥 0 joueurs</span>
+      <span class="pill" id="answers-pill">✅ 0 réponses</span>
+    </div>
+
+    <div style="margin-top:10px; font-size:.9rem; color:#9ca3af;">
+      Joueurs connectés : <span id="players-list">—</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <div class="question-meta">
+        <span id="q-progress">Lobby</span>
+        <span id="timer">⏳</span>
+      </div>
+
+      <div class="photo-wrapper" id="photo-zone">
+        <span>Salle d’attente…</span>
+      </div>
+
+      <div style="margin-top:14px;color:#9ca3af;font-size:.9rem;" id="status-text">
+        En attente du lancement.
+      </div>
+
+      <div style="margin-top:10px; display:none; color:#bbf7d0;" id="finished-msg">
+        Fin du quiz 🎉 – podium final affiché.
+      </div>
+    </div>
+
+    <div class="reveal-card">
+      <div class="card">
+        <div class="scores-title">Révélation</div>
+        <div class="submeta" id="reveal-meta">En attente…</div>
+
+        <div class="photo-wrapper" id="reveal-photo-zone" style="min-height:240px;">
+          <span>Photo “maintenant”</span>
+        </div>
+
+        <div class="proverb" id="proverb-zone">—</div>
+
+        <div class="heatmap-wrap">
+          <div class="scores-title" style="margin-top:12px;">Heatmap temps de réponse</div>
+          <div class="bars" id="heat-bars"></div>
+          <div class="heat-legend">
+            <span>0s</span><span>20s</span>
+          </div>
+          <div class="badge">
+            <span class="dot"></span> Total réponses
+            <span style="margin-left:14px" class="dot2"></span> Bonnes réponses
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="scores-title">Podium</div>
+        <ul class="scores-list" id="podium-list">
+          <li><span>—</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let lastId = null;
+  let lastPhase = null;
+
+  function setPodium(podium){
+    const ul = document.getElementById("podium-list");
+    ul.innerHTML = "";
+    if (!podium || podium.length === 0){
+      ul.innerHTML = "<li><span>Aucun joueur…</span></li>";
+      return;
+    }
+    podium.forEach(p => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${p.rank}. ${p.pseudo} <span style="color:#9ca3af;font-size:.85rem;">(streak ${p.streak}, fast ${p.fast})</span></span><span>${p.score} pts</span>`;
+      ul.appendChild(li);
+    });
+  }
+
+  function renderHeatmap(heatmap){
+    const wrap = document.getElementById("heat-bars");
+    wrap.innerHTML = "";
+    if (!heatmap || !heatmap.length){
+      wrap.innerHTML = `<div style="color:#9ca3af;font-size:.85rem;">—</div>`;
+      return;
+    }
+
+    const maxCount = Math.max(...heatmap.map(b => b.count), 1);
+    heatmap.forEach(b => {
+      const bar = document.createElement("div");
+      bar.className = "bar";
+
+      const fill = document.createElement("div");
+      fill.className = "fill";
+      fill.style.height = `${(b.count / maxCount) * 100}%`;
+
+      const cap = document.createElement("div");
+      cap.className = "cap";
+      cap.style.height = `${(b.correct / maxCount) * 100}%`;
+
+      bar.title = `${Math.round(b.from_s)}–${Math.round(b.to_s)}s : ${b.count} réponses, ${b.correct} bonnes`;
+      bar.appendChild(fill);
+      bar.appendChild(cap);
+      wrap.appendChild(bar);
+    });
+  }
+
+  async function post(url){
+    const res = await fetch(url, {method:"POST"});
+    const raw = await res.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch(e) {}
+    if (!res.ok){
+      console.error("POST error", url, res.status, raw);
+      alert((data && data.error) ? data.error : `Erreur API (${res.status})`);
+    }
+  }
+
+  document.getElementById("btn-start").onclick  = () => post("/api/game/start");
+  document.getElementById("btn-pause").onclick  = () => post("/api/game/pause");
+  document.getElementById("btn-resume").onclick = () => post("/api/game/resume");
+  document.getElementById("btn-next").onclick   = () => post("/api/game/next");
+  document.getElementById("btn-reset").onclick  = () => post("/api/game/reset");
+
+  async function refresh(){
+    const res = await fetch("/api/current_question");
+    if (!res.ok) return;
+    const data = await res.json();
+
+    document.getElementById("players-pill").textContent = `👥 ${data.players_count} joueurs`;
+    document.getElementById("answers-pill").textContent = `✅ ${data.answers_received} réponses`;
+    document.getElementById("players-list").textContent =
+      (data.players && data.players.length) ? data.players.join(", ") : "—";
+
+    if (data.phase === "lobby"){
+      document.getElementById("lobby-info").textContent =
+        `Lobby — ${data.players_count} joueurs. Cliquez sur Lancer.`;
+      document.getElementById("q-progress").textContent = "Lobby — attente";
+      document.getElementById("timer").textContent = "⏳ —";
+      document.getElementById("photo-zone").innerHTML = `<span>Salle d’attente…</span>`;
+      document.getElementById("status-text").textContent = "En attente du lancement.";
+      document.getElementById("reveal-meta").textContent = "En attente…";
+      document.getElementById("reveal-photo-zone").innerHTML = `<span>Photo “maintenant”</span>`;
+      document.getElementById("proverb-zone").textContent = "—";
+      renderHeatmap(null);
+      setPodium(null);
+      document.getElementById("finished-msg").style.display = "none";
+      return;
+    }
+
+    document.getElementById("lobby-info").textContent = data.game_paused ? "Jeu en PAUSE." : "Jeu en cours.";
+
+    document.getElementById("q-progress").textContent = `Question ${data.question_number} / ${data.total_questions}`;
+    document.getElementById("timer").textContent = `⏳ ${data.phase_remaining}s`;
+
+    if (lastId !== data.id || lastPhase !== data.phase){
+      lastId = data.id;
+      lastPhase = data.phase;
+      document.getElementById("photo-zone").innerHTML = `<img src="${data.image_url}" alt="Photo ancienne">`;
+    }
+
+    if (data.phase === "question"){
+      document.getElementById("status-text").textContent =
+        `Phase QUESTION : ${data.answers_received}/${data.players_count} réponses.`;
+      document.getElementById("reveal-meta").textContent = "En attente de la révélation…";
+      document.getElementById("reveal-photo-zone").innerHTML = `<span>Photo “maintenant”</span>`;
+      document.getElementById("proverb-zone").textContent = "—";
+      renderHeatmap(null);
+      setPodium(null);
+      document.getElementById("finished-msg").style.display = "none";
+      return;
+    }
+
+    if (data.phase === "reveal"){
+      document.getElementById("status-text").textContent = "Phase RÉVÉLATION : photo actuelle + proverbe.";
+      document.getElementById("reveal-meta").textContent = `Réponse : ${data.correct_label}`;
+      document.getElementById("reveal-photo-zone").innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
+      document.getElementById("proverb-zone").textContent = data.proverb || "";
+      renderHeatmap(data.heatmap);
+      setPodium(null);
+      return;
+    }
+
+    if (data.phase === "podium"){
+      document.getElementById("status-text").textContent = "Phase PODIUM : classement intermédiaire.";
+      document.getElementById("reveal-meta").textContent = `Réponse : ${data.correct_label}`;
+      document.getElementById("reveal-photo-zone").innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
+      document.getElementById("proverb-zone").textContent = data.proverb || "";
+      renderHeatmap(data.heatmap);
+      setPodium(data.podium);
+      return;
+    }
+
+    if (data.phase === "finished"){
+      document.getElementById("status-text").textContent = "Quiz terminé : podium final.";
+      document.getElementById("reveal-meta").textContent = `Dernière réponse : ${data.correct_label}`;
+      document.getElementById("reveal-photo-zone").innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
+      document.getElementById("proverb-zone").textContent = data.proverb || "";
+      renderHeatmap(data.heatmap);
+      setPodium(data.podium);
+      document.getElementById("finished-msg").style.display = "block";
+    }
+  }
+
+  refresh();
+  setInterval(refresh, 500);
+</script>
+</body>
+</html>
