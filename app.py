@@ -34,10 +34,10 @@ PHOTOS_DIR = os.path.join(app.root_path, "static", "photos")
 # ------------------ Dropdown employés ------------------
 # "Autre" doit exister (utilisé pour les blagues + choix joueur)
 EMPLOYEES_ALL = [
-  "Marc","Adélie","Annie","Maéva","Laure","Coline","Matthieu","Roberto","Romain","Serigne",
+  "Marc","Adélie","Annie","Maeva","Laure","Coline","Matthieu","Roberto","Romain","Serigne",
   "Manon","Mélanie","Said","Magid","Anais","Mathilde","Chang Mo","Nathalie","Camille","Fatima",
-  "Nadège","Cathy","Julie","Guiseppe","Loric","Johanna","Férisa","Quentin","Edith","Thierry",
-  "Corinne","Ophélie","Marie Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
+  "Nadège","Cathy","Julie","Guiseppe","Loric","Johanna","Ferisa","Quentin","Edith","Thierry",
+  "Corinne","Ophélie","Marie-Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
   "Elsa","constance","Valérie","sophie","Claire","Caroline","Eddie","Khalil",
 
   # Ajouts
@@ -59,11 +59,11 @@ DESIRED_QUIZ_ORDER = [
     "Melanie Di Martino",
     "Roberto",
     "Nicolas",
-    "Marie Claude",
+    "Marie-Claude",
     "Blague 2",
     "Hanife",
     "Elsa",
-    "Férisa",
+    "Ferisa",
     "Blague 1",
     "Romain",
     "Cathy",
@@ -95,7 +95,7 @@ DESIRED_QUIZ_ORDER = [
     "Eddie",
     "Lucie",
     "Serigne",
-    "Maéva",
+    "Maeva",
     "Marc",
     "Mélanie",
     "Nadège",
