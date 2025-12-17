@@ -266,7 +266,7 @@
     <div class="subtitle">Choisissez un pseudo, puis validez pour participer.</div>
 
     <label for="pseudo">Pseudo</label>
-    <input type="text" id="pseudo" placeholder="Ex. Hamid">
+    <input type="text" id="pseudo" placeholder="Ex. Alexandre">
 
     <button class="btn btn-primary" id="join-btn">Rejoindre</button>
     <div class="status" id="login-status"></div>
@@ -308,6 +308,10 @@
       <button class="btn btn-secondary" id="submit-btn" disabled>Valider</button>
       <div class="status" id="quiz-status"></div>
     </div>
+<div id="mid-panel" class="hidden" style="margin-top:12px;">
+  <div style="font-weight:1000; margin-bottom:8px;">🏁 Classement intermédiaire</div>
+  <div class="podium" id="mid-podium-grid"></div>
+</div>
 
     <div id="final-panel" class="hidden">
       <div class="confetti" id="confetti"></div>
@@ -522,6 +526,39 @@
       grid.appendChild(box);
     });
   }
+  function showMidPodium(podium){
+  const panel = document.getElementById("mid-panel");
+  const grid = document.getElementById("mid-podium-grid");
+  panel.classList.remove("hidden");
+
+  grid.innerHTML = "";
+  const top3 = (podium || []).slice(0,3);
+
+  const classes = ["silver","gold","bronze"]; // visuel: 2,1,3
+  const order = [1,0,2];
+
+  order.forEach((idx, pos) => {
+    const p = top3[idx];
+    const box = document.createElement("div");
+    box.className = `pod ${classes[pos]}`;
+
+    if (!p){
+      box.innerHTML = `<div class="rank">—</div><div class="name">—</div><div class="score">0</div>`;
+    } else {
+      const rankLabel = (p.rank === 1) ? "🥇 1er" : (p.rank === 2) ? "🥈 2e" : "🥉 3e";
+      box.innerHTML = `
+        <div class="rank">${rankLabel}</div>
+        <div class="name">${p.pseudo}</div>
+        <div class="score">${p.score} pts</div>
+      `;
+    }
+    grid.appendChild(box);
+  });
+}
+
+function hideMidPodium(){
+  document.getElementById("mid-panel").classList.add("hidden");
+}
 
   // ------------------ API flow ------------------
   async function registerPlayer(){
@@ -663,6 +700,7 @@
     }
 
     if (data.phase === "question"){
+      hideMidPodium();
       sel.disabled = answerSentForCurrent;
       btn.disabled = answerSentForCurrent;
       status.textContent = answerSentForCurrent
@@ -675,16 +713,19 @@
     btn.disabled = true;
 
     if (data.phase === "reveal"){
+      hideMidPodium();
       status.textContent = "Révélation…";
       return;
     }
 
     if (data.phase === "podium"){
-      status.textContent = "Classement intermédiaire…";
-      return;
-    }
+  status.textContent = "";
+  showMidPodium(data.podium || []);
+  return;
+}
 
     if (data.phase === "finished"){
+      hideMidPodium();
       status.textContent = "Quiz terminé.";
       showFinal(data.podium || []);
       return;
