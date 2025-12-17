@@ -49,7 +49,6 @@
       font-size:.82rem;color:var(--muted);
     }
 
-    /* Photo wrapper = bandeau + zone image */
     .photo-wrapper{
       border-radius:14px;
       overflow:hidden;
@@ -93,7 +92,6 @@
       display:block;
     }
 
-    /* Règlement lobby */
     .rules{
       border:1px solid var(--border);
       background:var(--panel);
@@ -120,7 +118,6 @@
       line-height:1.35;
     }
 
-    /* Podiums (intermédiaire & final) */
     .final-wrap{
       padding:8px 2px 2px;
       text-align:center;
@@ -157,11 +154,9 @@
     .pod:nth-child(1){animation-delay:.15s;}
     .pod:nth-child(2){animation-delay:.00s;}
     .pod:nth-child(3){animation-delay:.28s;}
-
     @keyframes rise{
       to{transform: translateY(0) scale(1); opacity:1;}
     }
-
     .pod .rank{
       font-size:.9rem;
       color:var(--muted);
@@ -185,7 +180,6 @@
     .pod.silver .score{color:var(--silver);}
     .pod.bronze .score{color:var(--bronze);}
 
-    /* Confettis CSS (léger, sans libs) */
     .confetti{
       position:absolute; inset:0;
       pointer-events:none;
@@ -204,7 +198,7 @@
       100%{transform:translateY(120vh) rotate(420deg);}
     }
 
-    /* Overlay points */
+    /* Overlay points / intro */
     .award{
       position:absolute; inset:0;
       display:flex; align-items:center; justify-content:center;
@@ -245,7 +239,17 @@
     </div>
   </div>
 
-  <!-- Login -->
+  <!-- Overlay intro VIP -->
+  <div class="award" id="intro-overlay" style="z-index:20;">
+    <div class="box" style="min-width:290px;">
+      <div style="display:flex;justify-content:center;margin-bottom:10px;">
+        <img id="intro-img" src="" alt="" style="width:110px;height:110px;border-radius:18px;object-fit:cover;border:1px solid var(--border);">
+      </div>
+      <div class="pts" id="intro-title" style="font-size:1.15rem;color:var(--text);margin-bottom:6px;">—</div>
+      <div class="meta" id="intro-sub" style="font-size:.98rem;">—</div>
+    </div>
+  </div>
+
   <div id="login-panel">
     <h1>Rejoindre le quiz</h1>
     <div class="subtitle">Choisissez un pseudo, puis validez pour participer.</div>
@@ -257,7 +261,6 @@
     <div class="status" id="login-status"></div>
   </div>
 
-  <!-- Jeu -->
   <div id="quiz-panel" class="hidden">
     <div class="question-meta">
       <span id="q-meta">—</span>
@@ -274,7 +277,6 @@
       </div>
     </div>
 
-    <!-- Règlement lobby -->
     <div id="rules-panel" class="rules hidden">
       <h2>📌 Règlement (comment jouer)</h2>
       <ol>
@@ -286,7 +288,6 @@
       <div class="hint">Astuce : gardez un œil sur le chrono en haut (Q… / …).</div>
     </div>
 
-    <!-- Réponse -->
     <div id="answer-panel">
       <label for="employee-select">Votre réponse</label>
       <select id="employee-select" disabled>
@@ -297,16 +298,6 @@
       <div class="status" id="quiz-status"></div>
     </div>
 
-    <!-- Podium intermédiaire (phase PODIUM) -->
-    <div id="podium-panel" class="hidden">
-      <div class="final-wrap">
-        <div class="final-title" style="font-size:1.15rem;margin:10px 0 4px;">📊 Classement</div>
-        <div class="final-sub" style="margin:0 0 10px;">Top 3 après cette question</div>
-        <div class="podium" id="podium-round"></div>
-      </div>
-    </div>
-
-    <!-- Podium final (phase FINISHED) -->
     <div id="final-panel" class="hidden">
       <div class="confetti" id="confetti"></div>
       <div class="final-wrap">
@@ -371,51 +362,119 @@
     panel.classList.toggle("hidden", !show);
   }
 
-  function showRoundPodium(podium){
-    const panel = document.getElementById("podium-panel");
-    const grid = document.getElementById("podium-round");
-
-    if (!podium || !podium.length){
-      panel.classList.add("hidden");
-      grid.innerHTML = "";
-      return;
-    }
-
-    panel.classList.remove("hidden");
-    grid.innerHTML = "";
-
-    const top3 = (podium || []).slice(0,3);
-    const classes = ["silver","gold","bronze"]; // ordre visuel: 2,1,3
-    const order = [1,0,2];
-
-    order.forEach((idx, pos) => {
-      const p = top3[idx];
-      const box = document.createElement("div");
-      box.className = `pod ${classes[pos]}`;
-
-      if (!p){
-        box.innerHTML = `<div class="rank">—</div><div class="name">—</div><div class="score">0</div>`;
-      } else {
-        const rankLabel = (p.rank === 1) ? "🥇 1er" : (p.rank === 2) ? "🥈 2e" : "🥉 3e";
-        box.innerHTML = `
-          <div class="rank">${rankLabel}</div>
-          <div class="name">${p.pseudo}</div>
-          <div class="score">${p.score} pts</div>
-        `;
-      }
-      grid.appendChild(box);
-    });
+  /* ------------------- INTRO VIP (robuste) ------------------- */
+  function norm(s){
+    return (s || "")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
   }
+
+  function tokens(s){
+    const t = norm(s).split(" ").filter(Boolean);
+    return new Set(t);
+  }
+
+  // ✅ clé = identifiant "cible"
+  // ✅ match si un token du pseudo correspond (ou si le pseudo contient le mot)
+  const INTRO = [
+    {
+      key: "magid",
+      match: ["magid"],
+      img: "/static/avatars/magid.jpg",
+      title: "🔥 Entrée légendaire",
+      msg: "Quel plaisir… le GOAT vient enfin d’entrer dans la partie."
+    },
+    {
+      key: "said",
+      match: ["said", "saïd"],
+      img: "/static/avatars/said.jpg",
+      title: "🧠 Niveau S++",
+      msg: "Attention… le génie est là."
+    },
+    {
+      key: "matthieu",
+      match: ["matthieu", "mathieu"], // au cas où
+      img: "/static/avatars/matthieu.jpg",
+      title: "👑 Respect",
+      msg: "Le Big Boss est dans le jeu, mesdames et messieurs."
+    },
+    {
+      key: "romain",
+      match: ["romain"],
+      img: "/static/avatars/romain.jpg",
+      title: "🏭 Production ready",
+      msg: "Le responsable de production est dans le game, mesdames et messieurs."
+    },
+    {
+      key: "cathy",
+      match: ["cathy", "cathie"],
+      img: "/static/avatars/cathy.jpg",
+      title: "✨ Good vibes",
+      msg: "Cathy est là : bonne humeur garantie."
+    },
+    {
+      key: "khalil",
+      match: ["khalil"],
+      img: "/static/avatars/khalil.jpg",
+      title: "🇹🇳 Déplacement international",
+      msg: "Monsieur Khalil est venu de Tunisie juste pour jouer avec nous, mesdames et messieurs."
+    }
+  ];
+
+  function findIntroConfig(pseudoRaw){
+    const pNorm = norm(pseudoRaw);
+    const tk = tokens(pseudoRaw);
+
+    // match token exact en priorité
+    for (const cfg of INTRO){
+      for (const m of cfg.match){
+        const mNorm = norm(m);
+        if (tk.has(mNorm)) return cfg;
+      }
+    }
+    // fallback: substring (ex: "romain-clor" => "romain clor")
+    for (const cfg of INTRO){
+      for (const m of cfg.match){
+        const mNorm = norm(m);
+        if (pNorm.includes(mNorm)) return cfg;
+      }
+    }
+    return null;
+  }
+
+  async function showIntroIfNeeded(pseudoRaw){
+    const cfg = findIntroConfig(pseudoRaw);
+    if (!cfg) return;
+
+    const seenKey = "intro_seen_" + cfg.key;
+    if (localStorage.getItem(seenKey) === "1") return;
+    localStorage.setItem(seenKey, "1");
+
+    const overlay = document.getElementById("intro-overlay");
+    const img = document.getElementById("intro-img");
+    const title = document.getElementById("intro-title");
+    const sub = document.getElementById("intro-sub");
+
+    img.src = cfg.img;
+    title.textContent = cfg.title;
+    sub.textContent = cfg.msg;
+
+    overlay.classList.add("show");
+    await new Promise(r => setTimeout(r, 1800));
+    overlay.classList.remove("show");
+  }
+  /* ---------------------------------------------------------- */
 
   function showFinal(podium){
     if (finishedShown) return;
     finishedShown = true;
 
     document.getElementById("answer-panel").classList.add("hidden");
-    document.getElementById("podium-panel").classList.add("hidden");
     document.getElementById("final-panel").classList.remove("hidden");
 
-    // Confettis
     const conf = document.getElementById("confetti");
     conf.innerHTML = "";
     const colors = ["#22c55e","#60a5fa","#fbbf24","#fb7185","#a78bfa","#34d399"];
@@ -429,19 +488,16 @@
       conf.appendChild(el);
     }
 
-    // Podium final
     const grid = document.getElementById("podium-grid");
     grid.innerHTML = "";
     const top3 = (podium || []).slice(0,3);
 
-    const classes = ["silver","gold","bronze"]; // 2,1,3
+    const classes = ["silver","gold","bronze"];
     const order = [1,0,2];
-
     order.forEach((idx, pos) => {
       const p = top3[idx];
       const box = document.createElement("div");
       box.className = `pod ${classes[pos]}`;
-
       if (!p){
         box.innerHTML = `<div class="rank">—</div><div class="name">—</div><div class="score">0</div>`;
       } else {
@@ -478,6 +534,9 @@
     pseudo = name;
     localStorage.setItem("quiz_pseudo", pseudo);
 
+    // ✅ intro VIP si pseudo contient le prénom (peu importe maj/min/nom)
+    await showIntroIfNeeded(pseudo);
+
     document.getElementById("login-panel").classList.add("hidden");
     document.getElementById("quiz-panel").classList.remove("hidden");
     document.getElementById("quiz-status").textContent = "Salle d’attente : l’animateur va lancer la partie.";
@@ -500,20 +559,16 @@
       fillEmployees(data.employees);
     }
 
-    // Aucun quiz
     if (data.total_questions === 0){
       document.getElementById("q-meta").textContent = "Aucune question disponible";
       document.getElementById("photo-media").innerHTML = "<span>Ajoute des paires enfant/adulte dans static/photos</span>";
       document.getElementById("top-banner").classList.remove("show");
       showRules(false);
-      document.getElementById("podium-panel").classList.add("hidden");
-      document.getElementById("final-panel").classList.add("hidden");
       disableAnswerUI("Aucune paire photo détectée.");
       setTimeout(pollQuestion, 1200);
       return;
     }
 
-    // Lobby => afficher règles
     if (data.phase === "lobby"){
       document.getElementById("q-meta").textContent = "LOBBY — en attente du lancement…";
       document.getElementById("photo-media").innerHTML = "<span>Salle d’attente…</span>";
@@ -521,7 +576,6 @@
       showRules(true);
 
       document.getElementById("answer-panel").classList.remove("hidden");
-      document.getElementById("podium-panel").classList.add("hidden");
       document.getElementById("final-panel").classList.add("hidden");
       finishedShown = false;
 
@@ -532,7 +586,6 @@
       return;
     }
 
-    // Game running => cacher règles
     showRules(false);
 
     document.getElementById("q-meta").textContent =
@@ -566,7 +619,6 @@
 
     const isReveal = (data.phase === "reveal" || data.phase === "podium" || data.phase === "finished");
 
-    // Image + bandeau
     if (isReveal && data.reveal_image_url){
       media.innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
 
@@ -590,16 +642,11 @@
     }
 
     if (data.game_paused){
-      document.getElementById("podium-panel").classList.add("hidden");
       disableAnswerUI("⏸ Pause : attendez la reprise.");
       return;
     }
 
     if (data.phase === "question"){
-      document.getElementById("answer-panel").classList.remove("hidden");
-      document.getElementById("podium-panel").classList.add("hidden");
-      document.getElementById("final-panel").classList.add("hidden");
-
       sel.disabled = answerSentForCurrent;
       btn.disabled = answerSentForCurrent;
       status.textContent = answerSentForCurrent
@@ -608,31 +655,23 @@
       return;
     }
 
-    // En dehors de question => on bloque l’UI
     sel.disabled = true;
     btn.disabled = true;
 
     if (data.phase === "reveal"){
-      document.getElementById("answer-panel").classList.remove("hidden");
-      document.getElementById("podium-panel").classList.add("hidden");
-      document.getElementById("final-panel").classList.add("hidden");
-
       status.textContent = "Révélation…";
       return;
     }
 
     if (data.phase === "podium"){
-      document.getElementById("answer-panel").classList.remove("hidden");
-      document.getElementById("final-panel").classList.add("hidden");
-
+      // Ici tu avais “classement intermédiaire…”, mais ton écran joueur ne montre pas le podium par design.
+      // On garde le texte propre.
       status.textContent = "Classement intermédiaire…";
-      showRoundPodium(data.podium || []);
       return;
     }
 
     if (data.phase === "finished"){
       status.textContent = "Quiz terminé.";
-      // écran podium final uniquement
       showFinal(data.podium || []);
       return;
     }
