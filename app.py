@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 from flask import Flask, render_template, request, jsonify, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from io import BytesIO
 import qrcode
 import time
-import socket
 import os
 import re
 import math
 import unicodedata
 
 app = Flask(__name__)
+
+# Important pour Render / reverse proxy (HTTPS + host corrects)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # ------------------ Timing ------------------
 QUESTION_DURATION = 20
@@ -153,15 +157,15 @@ CHILD_KEYS = [
     ("petite",2),
     ("pre-ado",3),
     ("pré-ado",3),
-    ("jeune", 4),          # ✅ ajouté
+    ("jeune", 4),
 ]
 
 ADULT_KEYS = [
     ("adulte", 0),
     ("actuelle", 1),
-    ("actuel", 2),         # ✅ ajouté
-    ("maintenant", 3),     # ✅ ajouté
-    ("aujourd", 4),        # ✅ ajouté (aujourd’hui)
+    ("actuel", 2),
+    ("maintenant", 3),
+    ("aujourd", 4),
 ]
 
 # ------------------ Normalisation noms ------------------
@@ -222,12 +226,14 @@ def build_quiz_from_photos_folder() -> list[dict]:
         path = os.path.join(PHOTOS_DIR, fn)
         if not os.path.isfile(path):
             continue
+
         _, ext = os.path.splitext(fn)
         if ext not in VALID_EXT:
             continue
 
         stem = os.path.splitext(fn)[0]
         stem_lower = stem.lower()
+
         kind = _detect_kind(stem_lower)
         if kind is None:
             continue
@@ -239,6 +245,7 @@ def build_quiz_from_photos_folder() -> list[dict]:
         pr = _priority(stem_lower, kind)
         if person not in buckets:
             buckets[person] = {"child": None, "adult": None}
+
         cur = buckets[person][kind]
         if cur is None or pr < cur[0]:
             buckets[person][kind] = (pr, fn)
@@ -249,6 +256,7 @@ def build_quiz_from_photos_folder() -> list[dict]:
 
     quiz = []
     qid = 1
+
     for wanted in DESIRED_QUIZ_ORDER:
         wanted_norm = _norm_name(wanted)
         is_blague = wanted_norm.startswith("blague")
@@ -306,22 +314,10 @@ game_started = False
 game_paused = False
 pause_started_at = None
 
-# ------------------ Helpers ------------------
-def get_local_ip() -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-    return ip
-
+# ------------------ URL publique join (Render / local) ------------------
 def get_join_url() -> str:
-    public = os.environ.get("PUBLIC_BASE_URL", "").rstrip("/")
-    if public:
-        return f"{public}/join"
-    return f"http://{get_local_ip()}:{int(os.environ.get('PORT', 8000))}/join"
-
+    base = request.url_root.rstrip("/")
+    return f"{base}/join"
 
 def current_question():
     return QUIZ[current_question_index]
@@ -550,7 +546,7 @@ def api_current_question():
         "players_count": len(players),
         "players": sorted(players.keys()),
         "answers_received": answers_received_for_current_question(),
-        "employees": employees_sorted(),  # ✅ tri alpha + Autre en premier
+        "employees": employees_sorted(),  # tri alpha + Autre en premier
         "scoring": {
             "scale": SCORE_SCALE,
             "decay": SCORE_DECAY,
