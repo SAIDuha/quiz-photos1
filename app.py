@@ -44,7 +44,7 @@ EMPLOYEES_ALL = [
   "Nicolas",
   "Véronique",
   "Lucie",
-  "Mélanie Di martino",
+  "Melanie Di Martino",
 
 
   # Remplacement de "Aucun"
@@ -56,7 +56,7 @@ EMPLOYEES_ALL = [
 # ✅ Blague 5 après Khalil
 DESIRED_QUIZ_ORDER = [
     "Aline",
-    "Mélanie Di martino",
+    "Melanie Di Martino",
     "Roberto",
     "Nicolas",
     "Marie Claude",
