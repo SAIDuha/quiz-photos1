@@ -60,7 +60,7 @@ EMPLOYEES_ALL = [
 # ✅ Blague 5 après Khalil
 DESIRED_QUIZ_ORDER = [
     "Aline",
-    "Mélanie Di Martino",
+    "Mélanie Di martino",
     "Roberto",
     "Nicolas",
     "Marie Claude",
@@ -83,12 +83,12 @@ DESIRED_QUIZ_ORDER = [
     "Blague 5",
     "Adélie",
     "Nathalie",
-    "Anaïs",
+    "Anais",
     "Thierry",
     "Annie",
     "Claire",
     "Coline",
-    "Constance",
+    "constance",
     "Said",
     "Corinne",
     "Magid",
@@ -103,7 +103,7 @@ DESIRED_QUIZ_ORDER = [
     "Marc",
     "Mélanie",
     "Nadège",
-    "Sophie",
+    "sophie",
 ]
 
 # ------------------ Proverbes ------------------
