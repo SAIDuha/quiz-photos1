@@ -596,7 +596,7 @@ def api_current_question():
         })
 
     if phase in (PHASE_PODIUM, PHASE_FINISHED):
-        payload["podium"] = compute_podium(3)
+        payload["podium"] = compute_podium(5)
 
     return jsonify(payload)
 

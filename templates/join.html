@@ -230,6 +230,55 @@
     .award .pts{font-size:2rem; font-weight:1100; color:var(--good); margin-bottom:6px;}
     .award .meta{color:var(--muted);font-size:.95rem;}
     .award .total{margin-top:10px;color:var(--text);font-weight:900;}
+
+
+    .top5-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.top5-item{
+  border:1px solid var(--border);
+  background:var(--panel);
+  border-radius:16px;
+  padding:12px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  transform: translateY(10px) scale(.98);
+  opacity:0;
+  animation: rise .55s ease forwards;
+}
+
+.top5-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:0;
+}
+
+.top5-rank{
+  font-weight:1100;
+  color:var(--muted);
+  width:44px;
+}
+
+.top5-name{
+  font-weight:1100;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.top5-score{
+  font-weight:1100;
+}
+
+.top5-item.gold{border-color:rgba(251,191,36,.45);}
+.top5-item.gold .top5-score{color:var(--gold);}
+
   </style>
 </head>
 
@@ -310,7 +359,7 @@
     </div>
 <div id="mid-panel" class="hidden" style="margin-top:12px;">
   <div style="font-weight:1000; margin-bottom:8px;">🏁 Classement intermédiaire</div>
-  <div class="podium" id="mid-podium-grid"></div>
+  <div class="top5-list" id="mid-top5-list"></div>
 </div>
 
     <div id="final-panel" class="hidden">
@@ -528,31 +577,42 @@
   }
   function showMidPodium(podium){
   const panel = document.getElementById("mid-panel");
-  const grid = document.getElementById("mid-podium-grid");
+  const list = document.getElementById("mid-top5-list");
   panel.classList.remove("hidden");
 
-  grid.innerHTML = "";
-  const top3 = (podium || []).slice(0,3);
+  list.innerHTML = "";
+  const top5 = (podium || []).slice(0,5);
 
-  const classes = ["silver","gold","bronze"]; // visuel: 2,1,3
-  const order = [1,0,2];
+  top5.forEach((p, idx) => {
+    const row = document.createElement("div");
+    const isGold = (p && p.rank === 1);
+    row.className = `top5-item ${isGold ? "gold" : ""}`;
+    row.style.animationDelay = (idx * 0.08) + "s";
 
-  order.forEach((idx, pos) => {
-    const p = top3[idx];
-    const box = document.createElement("div");
-    box.className = `pod ${classes[pos]}`;
+    const medal = (!p) ? "—"
+      : (p.rank === 1) ? "🥇"
+      : (p.rank === 2) ? "🥈"
+      : (p.rank === 3) ? "🥉"
+      : "🏅";
 
     if (!p){
-      box.innerHTML = `<div class="rank">—</div><div class="name">—</div><div class="score">0</div>`;
+      row.innerHTML = `
+        <div class="top5-left">
+          <div class="top5-rank">—</div>
+          <div class="top5-name">—</div>
+        </div>
+        <div class="top5-score">0 pts</div>
+      `;
     } else {
-      const rankLabel = (p.rank === 1) ? "🥇 1er" : (p.rank === 2) ? "🥈 2e" : "🥉 3e";
-      box.innerHTML = `
-        <div class="rank">${rankLabel}</div>
-        <div class="name">${p.pseudo}</div>
-        <div class="score">${p.score} pts</div>
+      row.innerHTML = `
+        <div class="top5-left">
+          <div class="top5-rank">${medal} #${p.rank}</div>
+          <div class="top5-name">${p.pseudo}</div>
+        </div>
+        <div class="top5-score">${p.score} pts</div>
       `;
     }
-    grid.appendChild(box);
+    list.appendChild(row);
   });
 }
 
