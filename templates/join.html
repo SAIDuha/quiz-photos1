@@ -723,88 +723,94 @@ function hideMidPodium(){
   }
 
   function renderState(data){
-    const status = document.getElementById("quiz-status");
-    const sel = document.getElementById("employee-select");
-    const btn = document.getElementById("submit-btn");
+  const status = document.getElementById("quiz-status");
+  const sel    = document.getElementById("employee-select");
+  const btn    = document.getElementById("submit-btn");
 
-    const banner = document.getElementById("top-banner");
-    const topAnswer = document.getElementById("top-answer");
-    const topProverb = document.getElementById("top-proverb");
-    const media = document.getElementById("photo-media");
+  const banner    = document.getElementById("top-banner");
+  const topAnswer = document.getElementById("top-answer");
+  const topProverb= document.getElementById("top-proverb");
+  const media     = document.getElementById("photo-media");
 
-    const isReveal = (data.phase === "reveal" || data.phase === "podium" || data.phase === "finished");
+  const isReveal = (data.phase === "reveal" || data.phase === "podium" || data.phase === "finished");
 
-    // Image + bandeau
-    if (isReveal && data.reveal_image_url){
-      media.innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
+  // Image + bandeau
+  if (isReveal && data.reveal_image_url){
+    media.innerHTML = `<img src="${data.reveal_image_url}" alt="Photo actuelle">`;
 
-      const answerLine = data.correct_label ? `✅ Réponse : ${data.correct_label}` : "";
-      const proverbLine = (data.proverb || "").trim();
+    const answerLine  = data.correct_label ? `✅ Réponse : ${data.correct_label}` : "";
+    const proverbLine = (data.proverb || "").trim();
 
-      if (answerLine || proverbLine){
-        banner.classList.add("show");
-        topAnswer.textContent = answerLine;
-        topProverb.textContent = proverbLine;
-      } else {
-        banner.classList.remove("show");
-        topAnswer.textContent = "";
-        topProverb.textContent = "";
-      }
+    if (answerLine || proverbLine){
+      banner.classList.add("show");
+      topAnswer.textContent  = answerLine;
+      topProverb.textContent = proverbLine;
     } else {
-      media.innerHTML = `<img src="${data.image_url}" alt="Photo ancienne">`;
       banner.classList.remove("show");
-      topAnswer.textContent = "";
+      topAnswer.textContent  = "";
       topProverb.textContent = "";
     }
-
-    if (data.game_paused){
-      disableAnswerUI("⏸ Pause : attendez la reprise.");
-      return;
-    }
-
-    if (data.phase === "question"){
-      hideMidPodium();
-      sel.disabled = answerSentForCurrent;
-      btn.disabled = answerSentForCurrent;
-      status.textContent = answerSentForCurrent
-        ? "Réponse envoyée ✅ – attendez la révélation."
-        : "Sélectionnez un prénom puis validez.";
-      return;
-    }
-
-    sel.disabled = true;
-    btn.disabled = true;
-
-    if (data.phase === "reveal"){
-      hideMidPodium();
-      status.textContent = "Révélation…";
-      return;
-    }
-
-    if (data.phase === "podium"){
-  status.textContent = "";
-
-  const pod = data.podium || [];
-  const key = JSON.stringify(pod.map(x => [x.rank, x.pseudo, x.score]));
-
-  if (key !== lastMidPodiumKey){
-    lastMidPodiumKey = key;
-    showMidPodium(pod);
+  } else {
+    media.innerHTML = `<img src="${data.image_url}" alt="Photo ancienne">`;
+    banner.classList.remove("show");
+    topAnswer.textContent  = "";
+    topProverb.textContent = "";
   }
 
-  return;
+  if (data.game_paused){
+    disableAnswerUI("⏸ Pause : attendez la reprise.");
+    return;
+  }
+
+  if (data.phase === "question"){
+    // reset podium cache à chaque nouvelle question
+    lastMidPodiumKey = null;
+
+    hideMidPodium();
+    sel.disabled = answerSentForCurrent;
+    btn.disabled = answerSentForCurrent;
+    status.textContent = answerSentForCurrent
+      ? "Réponse envoyée ✅ – attendez la révélation."
+      : "Sélectionnez un prénom puis validez.";
+    return;
+  }
+
+  sel.disabled = true;
+  btn.disabled = true;
+
+  if (data.phase === "reveal"){
+    // reset cache pour forcer l’affichage au prochain podium
+    lastMidPodiumKey = null;
+
+    hideMidPodium();
+    status.textContent = "Révélation…";
+    return;
+  }
+
+  if (data.phase === "podium"){
+    status.textContent = "";
+
+    const pod = data.podium || [];
+    const key = pod.map(x => `${x.rank}:${x.pseudo}:${x.score}`).join("|");
+
+    if (key !== lastMidPodiumKey){
+      lastMidPodiumKey = key;
+      showMidPodium(pod);
+    }
+    return;
+  }
+
+  if (data.phase === "finished"){
+    lastMidPodiumKey = null;
+
+    hideMidPodium();
+    status.textContent = "Quiz terminé.";
+    showFinal(data.podium || []);
+    return;
+  }
+
+  status.textContent = "Attente…";
 }
-
-
-    if (data.phase === "finished"){
-      hideMidPodium();
-      status.textContent = "Quiz terminé.";
-      showFinal(data.podium || []);
-      return;
-    }
-
-    status.textContent = "Attente…";
-  }
 
   async function submitAnswer(){
     if (answerSentForCurrent) return;
