@@ -13,9 +13,9 @@ import unicodedata
 app = Flask(__name__)
 
 # ------------------ Timing ------------------
-QUESTION_DURATION = 20
-REVEAL_DURATION   = 8
-PODIUM_DURATION   = 8
+QUESTION_DURATION = 18
+REVEAL_DURATION   = 7
+PODIUM_DURATION   = 4
 
 # ------------------ Scoring (Kahoot-like, sans max) ------------------
 SCORE_SCALE = 1200
