@@ -40,7 +40,7 @@ EMPLOYEES_ALL = [
   "Manon","Mélanie","Said","Magid","Anais","Mathilde","Chang Mo","Nathalie","Camille","Fatima",
   "Nadège","Cathy","Julie","Guiseppe","Loric","Johanna","Ferisa","Quentin","Edith","Thierry",
   "Corinne","Ophélie","Marie-Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
-  "Elsa","constance","Valérie","Sophie","Claire","Caroline","Eddie","Khalil",
+  "Elsa","Constance","Valérie","Sophie","Claire","Caroline","Eddie","Khalil",
 
   # Ajouts
   "Nicolas",
