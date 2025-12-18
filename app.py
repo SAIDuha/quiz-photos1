@@ -16,6 +16,8 @@ app = Flask(__name__)
 QUESTION_DURATION = 18
 REVEAL_DURATION   = 7
 PODIUM_DURATION   = 5
+FIRST_QUESTIONS_COUNT = 3
+FIRST_QUESTION_DURATION = 25
 
 # ------------------ Scoring (Kahoot-like, sans max) ------------------
 SCORE_SCALE = 1200
@@ -323,12 +325,30 @@ def get_join_url() -> str:
 def current_question():
     return QUIZ[current_question_index]
 
+
+def current_question_duration() -> int:
+    """
+    25s pour les 3 premières questions, sinon QUESTION_DURATION.
+    """
+    qnum = current_question_index + 1  # 1-based
+    if qnum <= FIRST_QUESTIONS_COUNT:
+        return FIRST_QUESTION_DURATION
+    return QUESTION_DURATION
+
+
 def phase_duration(p: str) -> int:
     if p == PHASE_LOBBY:    return 0
-    if p == PHASE_QUESTION: return QUESTION_DURATION
+    if p == PHASE_QUESTION: return current_question_duration()
     if p == PHASE_REVEAL:   return REVEAL_DURATION
     if p == PHASE_PODIUM:   return PODIUM_DURATION
     return 0
+
+def duration_for_qid(qid: int) -> int:
+    # qid démarre à 1 et suit l'ordre des quiz
+    if qid <= FIRST_QUESTIONS_COUNT:
+        return FIRST_QUESTION_DURATION
+    return QUESTION_DURATION
+
 
 def phase_remaining_seconds() -> int:
     d = phase_duration(phase)
@@ -364,7 +384,8 @@ def build_heatmap_for_question(qid: int, bins: int = 10):
     if bins <= 0:
         bins = 10
 
-    bucket_w = QUESTION_DURATION / bins
+    q_duration = duration_for_qid(qid)
+    bucket_w = q_duration / bins
     buckets = [{"bin": i, "from_s": i*bucket_w, "to_s": (i+1)*bucket_w, "count": 0, "correct": 0} for i in range(bins)]
 
     for (_, qqid), a in answers.items():
@@ -629,6 +650,9 @@ def api_submit_answer():
     answer_time_s = now - phase_started_at
     t_ms = int(answer_time_s * 1000)
 
+    # ✅ Durée réelle de cette question (25s pour les 3 premières, sinon QUESTION_DURATION)
+    q_duration = current_question_duration()
+
     correct = (chosen_label == q["answer_label"])
     points = 0
     new_streak = players[pseudo]["streak"]
@@ -639,7 +663,8 @@ def api_submit_answer():
 
         base_pts = kahoot_like_score(answer_time_s)
 
-        if answer_time_s >= (QUESTION_DURATION * SLOW_RATIO):
+        # ✅ Pénalité "lent" basée sur la durée réelle
+        if answer_time_s >= (q_duration * SLOW_RATIO):
             base_pts = max(0, base_pts - SLOW_PENALTY)
 
         points = int(round(base_pts * mul))
@@ -648,7 +673,8 @@ def api_submit_answer():
         players[pseudo]["streak"] = new_streak
         players[pseudo]["last_award"] = points
 
-        if answer_time_s <= (QUESTION_DURATION * FAST_RATIO):
+        # ✅ Comptage "fast" basé sur la durée réelle
+        if answer_time_s <= (q_duration * FAST_RATIO):
             players[pseudo]["fast_count"] += 1
 
         players[pseudo]["total_time_correct_ms"] += t_ms
@@ -673,6 +699,7 @@ def api_submit_answer():
         "streak": players[pseudo]["streak"],
         "answer_time_ms": t_ms
     })
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
