@@ -15,7 +15,7 @@ app = Flask(__name__)
 # ------------------ Timing ------------------
 QUESTION_DURATION = 18
 REVEAL_DURATION   = 7
-PODIUM_DURATION   = 4
+PODIUM_DURATION   = 5
 
 # ------------------ Scoring (Kahoot-like, sans max) ------------------
 SCORE_SCALE = 1200
@@ -38,7 +38,7 @@ EMPLOYEES_ALL = [
   "Manon","Mélanie","Said","Magid","Anais","Mathilde","Chang Mo","Nathalie","Camille","Fatima",
   "Nadège","Cathy","Julie","Guiseppe","Loric","Johanna","Ferisa","Quentin","Edith","Thierry",
   "Corinne","Ophélie","Marie-Claude","Hanife","Alexia","Aline","Audrey","Cyndie","Aïda","Marie",
-  "Elsa","constance","Valérie","sophie","Claire","Caroline","Eddie","Khalil",
+  "Elsa","constance","Valérie","Sophie","Claire","Caroline","Eddie","Khalil",
 
   # Ajouts
   "Nicolas",
