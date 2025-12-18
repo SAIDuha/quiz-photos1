@@ -15,7 +15,7 @@ app = Flask(__name__)
 # ------------------ Timing ------------------
 QUESTION_DURATION = 18
 REVEAL_DURATION   = 7
-PODIUM_DURATION   = 5
+PODIUM_DURATION   = 7
 FIRST_QUESTIONS_COUNT = 3
 FIRST_QUESTION_DURATION = 25
 

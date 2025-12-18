@@ -379,6 +379,9 @@
 </div>
 
 <script>
+let lastMidPodiumKey = null;
+
+
   let pseudo = null;
   let lastQuestionId = null;
   let answerSentForCurrent = false;
@@ -780,9 +783,18 @@ function hideMidPodium(){
 
     if (data.phase === "podium"){
   status.textContent = "";
-  showMidPodium(data.podium || []);
+
+  const pod = data.podium || [];
+  const key = JSON.stringify(pod.map(x => [x.rank, x.pseudo, x.score]));
+
+  if (key !== lastMidPodiumKey){
+    lastMidPodiumKey = key;
+    showMidPodium(pod);
+  }
+
   return;
 }
+
 
     if (data.phase === "finished"){
       hideMidPodium();
